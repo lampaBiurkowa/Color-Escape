@@ -51,7 +51,7 @@
 #         name: bin
 #         path: artifacts/bin.zip
 
-name: Build SFML 2.5.1 on Windows
+name: Build Rust with SFML on Windows
 
 on:
   push:
@@ -69,29 +69,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Install CMake
+      - name: Set up MSYS2 environment
+        uses: msys2/setup-msys2@v2
+        with:
+          msys2-root: C:/msys64
+          update: true
+          install: mingw-w64-x86_64-toolchain
+
+      - name: Install SFML dependencies
         run: |
-          choco install cmake --installargs '"ADD_CMAKE_TO_PATH=System"'
-      
-      - name: Install MinGW
+          pacman -S mingw-w64-x86_64-toolchain --noconfirm
+          pacman -S mingw-w64-x86_64-sfml --noconfirm
+
+      - name: Set SFML environment variables
         run: |
-          choco install mingw --params "/InstallationType:Full /NoUpdate"
-      
-      - name: Clone SFML 2.5.1 repository
+          echo "::set-env name=SFML_INCLUDE_DIR::C:/msys64/mingw64/include"
+          echo "::set-env name=SFML_LIBS_DIR::C:/msys64/mingw64/lib"
+
+      - name: Build for Windows
         run: |
-          git clone --branch 2.5.1 --depth 1 https://github.com/SFML/SFML.git
-          cd SFML
-      
-      - name: Generate build files
+          rustup target add x86_64-pc-windows-gnu
+          cargo build --target x86_64-pc-windows-gnu --release --verbose
+
+      - name: Package artifacts
         run: |
-          mkdir build
-          cd build
-          cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
-      
-      - name: Build SFML
-        run: |
-          cmake --build . --config Release
-      
-      - name: Print build artifacts
-        run: |
-          dir SFML\build\lib  # Adjust path if necessary
+          mkdir artifacts
+          cp target/x86_64-pc-windows-gnu/release/bin.exe artifacts/
+          cd artifacts
+          zip -r bin.zip bin.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: bin
+          path: artifacts/bin.zip
