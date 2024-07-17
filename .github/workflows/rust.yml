@@ -28,9 +28,9 @@ jobs:
         sudo cp -r /usr/include/SFML /usr/include2/SFML
         ls /usr/lib/x86_64-linux-gnu
 
-    - name: Set LD_LIBRARY_PATH
+    - name: whatever
       run: |
-        echo "export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+        cargo build -vv
 
     - name: Build for Windows
       run: |
