@@ -8,7 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  SFML_INCLUDE_DIR: /usr/include
+  SFML_INCLUDE_DIR: /usr/include2
   SFML_LIBS_DIR: /usr/lib
 
 jobs:
@@ -21,6 +21,11 @@ jobs:
 
     - name: Install prerequisites
       run: sudo apt-get update && sudo apt-get install -y mingw-w64 && sudo apt install -y libsfml-dev && sudo apt install -y build-essential cmake git libx11-dev freeglut3-dev libxcb-image0-dev libudev-dev libjpeg8-dev libopenal-dev libsndfile1-dev libfreetype6-dev gcc-multilib
+
+    - name: 😐
+      run: |
+        mkdir /usr/include2
+        cp -r /usr/include/SFML /usr/include2/SFML
 
     - name: Build for Windows
       run: |
