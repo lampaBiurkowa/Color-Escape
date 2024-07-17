@@ -107,11 +107,9 @@ jobs:
           dir target
           dir target/release
           cp target/release/sfml_example.exe artifacts/
-          cd artifacts
-          zip -r bin.zip sfml_example.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: bin
-          path: artifacts/bin.zip
+          path: artifacts/sfml_example.exe
