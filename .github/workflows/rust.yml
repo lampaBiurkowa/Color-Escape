@@ -1,52 +1,97 @@
-name: Rust Build and Windows Artifact
+# name: Rust Build and Windows Artifact
+
+# on:
+#   push:
+#     branches: [ "master" ]
+#   pull_request:
+#     branches: [ "master" ]
+
+# env:
+#   CARGO_TERM_COLOR: always
+#   SFML_INCLUDE_DIR: /usr/include2
+#   SFML_LIBS_DIR: /usr/lib/x86_64-linux-gnu
+
+# jobs:
+#   build:
+
+#     runs-on: ubuntu-latest
+
+#     steps:
+#     - uses: actions/checkout@v4
+
+#     - name: Install prerequisites
+#       run: sudo apt-get update && sudo apt-get install -y mingw-w64 && sudo apt install -y libsfml-dev libcsfml-dev && sudo apt install -y build-essential cmake git libx11-dev freeglut3-dev libxcb-image0-dev libudev-dev libjpeg8-dev libopenal-dev libsndfile1-dev libfreetype6-dev gcc-multilib
+
+#     - name: 😐
+#       run: |
+#         sudo mkdir /usr/include2
+#         sudo cp -r /usr/include/SFML /usr/include2/SFML
+#         ls /usr/lib/x86_64-linux-gnu | grep sfml
+
+#     - name: whatever
+#       run: |
+#         cargo build -vv
+
+#     - name: Build for Windows
+#       run: |
+#         echo $LD_LIBRARY_PATH
+#         rustup target add x86_64-pc-windows-gnu
+#         cargo build --target x86_64-pc-windows-gnu --release --verbose
+
+#     - name: Package artifacts
+#       run: |
+#         mkdir artifacts
+#         cp target/x86_64-pc-windows-gnu/release/bin.exe artifacts/
+#         cd artifacts
+#         zip -r bin.zip bin.exe
+
+#     - name: Upload artifact
+#       uses: actions/upload-artifact@v2
+#       with:
+#         name: bin
+#         path: artifacts/bin.zip
+
+name: Build SFML 2.5.1 on Windows
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - master
   pull_request:
-    branches: [ "master" ]
-
-env:
-  CARGO_TERM_COLOR: always
-  SFML_INCLUDE_DIR: /usr/include2
-  SFML_LIBS_DIR: /usr/lib/x86_64-linux-gnu
+    branches:
+      - master
 
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Install prerequisites
-      run: sudo apt-get update && sudo apt-get install -y mingw-w64 && sudo apt install -y libsfml-dev libcsfml-dev && sudo apt install -y build-essential cmake git libx11-dev freeglut3-dev libxcb-image0-dev libudev-dev libjpeg8-dev libopenal-dev libsndfile1-dev libfreetype6-dev gcc-multilib
-
-    - name: 😐
-      run: |
-        sudo mkdir /usr/include2
-        sudo cp -r /usr/include/SFML /usr/include2/SFML
-        ls /usr/lib/x86_64-linux-gnu | grep sfml
-
-    - name: whatever
-      run: |
-        cargo build -vv
-
-    - name: Build for Windows
-      run: |
-        echo $LD_LIBRARY_PATH
-        rustup target add x86_64-pc-windows-gnu
-        cargo build --target x86_64-pc-windows-gnu --release --verbose
-
-    - name: Package artifacts
-      run: |
-        mkdir artifacts
-        cp target/x86_64-pc-windows-gnu/release/bin.exe artifacts/
-        cd artifacts
-        zip -r bin.zip bin.exe
-
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: bin
-        path: artifacts/bin.zip
+      - uses: actions/checkout@v4
+      
+      - name: Install CMake
+        run: |
+          choco install cmake --installargs '"ADD_CMAKE_TO_PATH=System"'
+      
+      - name: Install MinGW
+        run: |
+          choco install mingw --params "/InstallationType:Full /NoUpdate"
+      
+      - name: Clone SFML 2.5.1 repository
+        run: |
+          git clone --branch 2.5.1 --depth 1 https://github.com/SFML/SFML.git
+          cd SFML
+      
+      - name: Generate build files
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+      
+      - name: Build SFML
+        run: |
+          cmake --build . --config Release
+      
+      - name: Print build artifacts
+        run: |
+          dir SFML\build\lib  # Adjust path if necessary
