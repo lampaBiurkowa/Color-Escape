@@ -8,6 +8,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  SFML_INCLUDE_DIR: /usr/include
+  SFML_LIBS_DIR: /usr/lib
 
 jobs:
   build:
