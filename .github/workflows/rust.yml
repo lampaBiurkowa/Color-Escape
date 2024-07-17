@@ -9,7 +9,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   SFML_INCLUDE_DIR: /usr/include2
-  SFML_LIBS_DIR: /usr/lib
+  SFML_LIBS_DIR: /usr/lib/x86_64-linux-gnu
 
 jobs:
   build:
@@ -26,7 +26,7 @@ jobs:
       run: |
         sudo mkdir /usr/include2
         sudo cp -r /usr/include/SFML /usr/include2/SFML
-        ls /usr/lib
+        ls /usr/lib/x86_64-linux-gnu
 
     - name: Build for Windows
       run: |
