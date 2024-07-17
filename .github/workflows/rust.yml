@@ -24,8 +24,8 @@ jobs:
 
     - name: 😐
       run: |
-        mkdir /usr/include2
-        cp -r /usr/include/SFML /usr/include2/SFML
+        sudo mkdir /usr/include2
+        sudo cp -r /usr/include/SFML /usr/include2/SFML
 
     - name: Build for Windows
       run: |
