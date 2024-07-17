@@ -86,8 +86,6 @@ jobs:
         run: |
           echo "SFML_INCLUDE_DIR is ${{ env.SFML_INCLUDE_DIR }}"
           echo "SFML_LIBS_DIR is ${{ env.SFML_LIBS_DIR }}"
-          dir C:/SFML/include
-          dir C:/SFML/lib
 
       - name: Close and reopen cmd prompt
         run: |
@@ -106,9 +104,11 @@ jobs:
       - name: Package artifacts
         run: |
           mkdir artifacts
-          cp target/x86_64-pc-windows-gnu/release/bin.exe artifacts/
+          dir target
+          dir target/release
+          cp target/release/sfml_example.exe artifacts/
           cd artifacts
-          zip -r bin.zip bin.exe
+          zip -r bin.zip sfml_example.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
