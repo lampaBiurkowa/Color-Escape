@@ -28,8 +28,13 @@ jobs:
         sudo cp -r /usr/include/SFML /usr/include2/SFML
         ls /usr/lib/x86_64-linux-gnu
 
+    - name: Set LD_LIBRARY_PATH
+      run: |
+        echo "export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+
     - name: Build for Windows
       run: |
+        echo $LD_LIBRARY_PATH
         rustup target add x86_64-pc-windows-gnu
         cargo build --target x86_64-pc-windows-gnu --release --verbose
 
