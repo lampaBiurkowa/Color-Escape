@@ -73,7 +73,7 @@ jobs:
       - name: Download and extract SFML
         run: |
           mkdir C:/SFML
-          curl -L https://www.sfml-dev.org/files/SFML-2.6.2-windows-vc15-64-bit.zip -o sfml.zip
+          curl -L https://www.sfml-dev.org/files/SFML-2.5.1-windows-vc15-32-bit.zip -o sfml.zip
           tar -xf sfml.zip -C C:/SFML --strip-components=1
           rm sfml.zip
 
