@@ -26,6 +26,7 @@ jobs:
       run: |
         sudo mkdir /usr/include2
         sudo cp -r /usr/include/SFML /usr/include2/SFML
+        ls /usr/lib
 
     - name: Build for Windows
       run: |
