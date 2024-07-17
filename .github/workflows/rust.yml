@@ -51,45 +51,51 @@
 #         name: bin
 #         path: artifacts/bin.zip
 
-name: Build Rust with SFML on Windows
+name: Setup SFML for rust-sfml
 
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
-
+on: [workflow_dispatch]
+env:
+  CARGO_TERM_COLOR: always
+  SFML_INCLUDE_DIR: C:/SFML/include
+  SFML_LIBS_DIR: C:/SFML/lib
 jobs:
   build:
-
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up MSYS2 environment
-        uses: msys2/setup-msys2@v2
-        with:
-          msys2-root: C:/msys64
-          update: true
-          install: mingw-w64-x86_64-toolchain
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-      - name: Install SFML dependencies
+      - name: Download and extract SFML
         run: |
-          pacman -S mingw-w64-x86_64-toolchain --noconfirm
-          pacman -S mingw-w64-x86_64-sfml --noconfirm
+          mkdir C:/SFML
+          curl -L https://www.sfml-dev.org/files/SFML-2.6.2-windows-vc15-64-bit.zip -o sfml.zip
+          tar -xf sfml.zip -C C:/SFML --strip-components=1
+          rm sfml.zip
 
-      - name: Set SFML environment variables
+      - name: Set up environment variables
         run: |
-          echo "::set-env name=SFML_INCLUDE_DIR::C:/msys64/mingw64/include"
-          echo "::set-env name=SFML_LIBS_DIR::C:/msys64/mingw64/lib"
+          echo "SFML_INCLUDE_DIR=C:/SFML/include" >> $GITHUB_ENV
+          echo "SFML_LIBS_DIR=C:/SFML/lib" >> $GITHUB_ENV
+
+      - name: Print environment variables
+        run: |
+          echo "SFML_INCLUDE_DIR is ${{ env.SFML_INCLUDE_DIR }}"
+          echo "SFML_LIBS_DIR is ${{ env.SFML_LIBS_DIR }}"
+
+      - name: Close and reopen cmd prompt
+        run: |
+          echo "Closing and reopening cmd prompt..."
+          cmd /c exit
+
+      - name: Verify environment variables
+        run: |
+          echo "SFML_INCLUDE_DIR is ${{ env.SFML_INCLUDE_DIR }}"
+          echo "SFML_LIBS_DIR is ${{ env.SFML_LIBS_DIR }}"
 
       - name: Build for Windows
         run: |
-          rustup target add x86_64-pc-windows-gnu
-          cargo build --target x86_64-pc-windows-gnu --release --verbose
+          cargo build --release --verbose
 
       - name: Package artifacts
         run: |
