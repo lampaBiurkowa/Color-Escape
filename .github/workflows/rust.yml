@@ -26,7 +26,7 @@ jobs:
       run: |
         sudo mkdir /usr/include2
         sudo cp -r /usr/include/SFML /usr/include2/SFML
-        ls /usr/lib/x86_64-linux-gnu
+        ls /usr/lib/x86_64-linux-gnu | grep sfml
 
     - name: whatever
       run: |
