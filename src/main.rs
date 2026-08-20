@@ -1,5 +1,7 @@
 extern crate sfml;
 
+mod dibrysoft;
+
 use std::fs;
 
 use sfml::audio::Music;
@@ -183,6 +185,7 @@ struct Game<'a> {
     music_game: Music<'a>,
     sound_game_over: Music<'a>,
     player: Player<'a>,
+    achievements: dibrysoft::Tracker,
 }
 
 enum GameState {
@@ -201,6 +204,7 @@ impl<'a> Game<'a> {
             music_game: Music::from_file("game.ogg").expect("Failed to load game music"),
             sound_game_over: Music::from_file("gameOver.ogg").expect("Failed to load game over sound"),
             player: Player::new(Vector2f::new(WINDOW_SIZE_X as f32 / 2.0, WINDOW_SIZE_Y as f32 / 2.0)),
+            achievements: dibrysoft::Tracker::new(),
         };
         game.music_game.set_looping(true);
         game.music_menu.set_looping(true);
@@ -247,6 +251,7 @@ impl<'a> Game<'a> {
         self.player.survival_time = 0.0;
         self.player.hits = 0;
         self.player.bonuses = 0;
+        self.achievements.record_run_start();
         balls.clear();
         for _ in 0..INITIAL_BALL_COUNT {
             self.spawn_ball(balls);
@@ -302,6 +307,8 @@ impl<'a> Game<'a> {
             match self.state {
                 GameState::Menu => {
                     self.play_menu_music();
+                    // the colour on screen is one the player has now seen
+                    self.achievements.record_color_shown(self.player.current_color_index, self.player.colors.len());
 
                     let mut title_text = Text::new("Color Escape", &font, 36);
                     title_text.set_fill_color(Color::WHITE);
@@ -340,11 +347,22 @@ impl<'a> Game<'a> {
                         health_boxes.push(HealthBox::new(&health_box_texture, position));
                         health_box_clock.restart();
                     }
+                    let boxes_before = health_boxes.len();
                     health_boxes.retain(|health_box| !self.player.check_collision_with_health_box(health_box));
+                    for _ in 0..(boxes_before - health_boxes.len()) {
+                        self.achievements.record_health_box();
+                    }
 
                     if rng.gen_bool(0.01) {
                         self.spawn_ball(&mut balls);
                     }
+
+                    self.achievements.record_frame(dibrysoft::Frame {
+                        survival_time: self.player.survival_time,
+                        hp: self.player.hp,
+                        hits: self.player.hits,
+                        ball_count: balls.len(),
+                    });
 
                     window.clear(Color::BLACK);
                     window.draw(&self.player.shape);
@@ -375,6 +393,8 @@ impl<'a> Game<'a> {
 
                     if self.player.hp <= 0 {
                         self.state = GameState::GameOver;
+                        let beat_high_score = self.high_score > 0.0 && self.player.survival_time > self.high_score;
+                        self.achievements.record_game_over(self.player.survival_time, beat_high_score);
                         self.play_menu_music();
                         play_sound(&mut self.sound_game_over);
                     }
@@ -438,6 +458,8 @@ fn main() {
         &ContextSettings::default(),
     );
     window.set_vertical_sync_enabled(true);
+    dibrysoft::init();
     let mut game = Game::new();
     game.run(&mut window);
+    dibrysoft::flush();
 }
