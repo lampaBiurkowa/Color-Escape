@@ -68,7 +68,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Download and extract SFML
         run: |
@@ -109,7 +109,7 @@ jobs:
           cp target/release/sfml_example.exe artifacts/
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: bin
           path: artifacts/sfml_example.exe
