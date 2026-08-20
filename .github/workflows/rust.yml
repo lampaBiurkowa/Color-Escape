@@ -51,7 +51,7 @@
 #         name: bin
 #         path: artifacts/bin.zip
 
-name: Setup SFML for rust-sfml
+name: Build Windows binary
 
 on:
     push:
@@ -60,13 +60,11 @@ on:
       branches: [ "master" ]
 env:
   CARGO_TERM_COLOR: always
-  SFML_INCLUDE_DIR: C:/SFML/include
-  SFML_LIBS_DIR: C:/SFML/lib
-  # rust-sfml 0.24 builds SFML and libflac from source with cmake, and the cmake crate
-  # asks cc for the Visual Studio version, which it cannot work out unless cargo runs
-  # under vcvars ("couldn't determine visual studio generator"). Naming the generator
-  # skips that guess. Keep this in step with the Visual Studio on the runner image.
-  CMAKE_GENERATOR: Visual Studio 17 2022
+  # rust-sfml 0.24 does not use a prebuilt SFML: it builds SFML and libflac from source
+  # with cmake. There is no Visual Studio on the runner - cc and cmake both fail to find
+  # one - so the whole build goes through the MinGW-w64 GCC installed below, and cmake
+  # drives it with Ninja instead of a Visual Studio generator.
+  CMAKE_GENERATOR: Ninja
 jobs:
   build:
     runs-on: windows-latest
@@ -75,46 +73,40 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Download and extract SFML
+      # The msvcrt flavour (mingw64, not ucrt64): that is the one Rust's
+      # x86_64-pc-windows-gnu target uses, and the one rust-sfml ships extlibs for.
+      - name: Install the MinGW-w64 toolchain
         run: |
-          mkdir C:/SFML
-          curl -L https://www.sfml-dev.org/files/SFML-2.5.1-windows-vc15-64-bit.zip -o sfml.zip
-          tar -xf sfml.zip -C C:/SFML --strip-components=1
-          rm sfml.zip
+          C:\msys64\usr\bin\pacman -Sy --noconfirm --needed mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja
+          echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - name: Set up environment variables
-        run: |
-          echo "SFML_INCLUDE_DIR=C:/SFML/include" >> $GITHUB_ENV
-          echo "SFML_LIBS_DIR=C:/SFML/lib" >> $GITHUB_ENV
+      - name: Add the Windows GNU target
+        run: rustup target add x86_64-pc-windows-gnu
 
-      - name: Print environment variables
+      - name: Show the toolchain
         run: |
-          echo "SFML_INCLUDE_DIR is ${{ env.SFML_INCLUDE_DIR }}"
-          echo "SFML_LIBS_DIR is ${{ env.SFML_LIBS_DIR }}"
-
-      - name: Close and reopen cmd prompt
-        run: |
-          echo "Closing and reopening cmd prompt..."
-          cmd /c exit
-
-      - name: Verify environment variables
-        run: |
-          echo "SFML_INCLUDE_DIR is ${{ env.SFML_INCLUDE_DIR }}"
-          echo "SFML_LIBS_DIR is ${{ env.SFML_LIBS_DIR }}"
+          gcc --version
+          cmake --version
+          ninja --version
 
       - name: Build for Windows
-        run: |
-          cargo build --release --verbose
+        run: cargo build --release --target x86_64-pc-windows-gnu --verbose
 
+      # A GCC-built exe imports the MinGW C++ runtime, which a plain Windows box does
+      # not have. openal32.dll is still on you - SFML links OpenAL dynamically whatever
+      # the toolchain, exactly as it did before, and the crate does not ship the DLL.
       - name: Package artifacts
         run: |
           mkdir artifacts
-          dir target
-          dir target/release
-          cp target/release/sfml_example.exe artifacts/
+          cp target/x86_64-pc-windows-gnu/release/sfml_example.exe artifacts/
+          foreach ($dll in "libstdc++-6.dll", "libwinpthread-1.dll", "libgcc_s_seh-1.dll") {
+            $src = "C:\msys64\mingw64\bin\$dll"
+            if (Test-Path $src) { cp $src artifacts\ }
+          }
+          dir artifacts
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: bin
-          path: artifacts/sfml_example.exe
+          path: artifacts/
