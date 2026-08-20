@@ -62,6 +62,11 @@ env:
   CARGO_TERM_COLOR: always
   SFML_INCLUDE_DIR: C:/SFML/include
   SFML_LIBS_DIR: C:/SFML/lib
+  # rust-sfml 0.24 builds SFML and libflac from source with cmake, and the cmake crate
+  # asks cc for the Visual Studio version, which it cannot work out unless cargo runs
+  # under vcvars ("couldn't determine visual studio generator"). Naming the generator
+  # skips that guess. Keep this in step with the Visual Studio on the runner image.
+  CMAKE_GENERATOR: Visual Studio 17 2022
 jobs:
   build:
     runs-on: windows-latest
